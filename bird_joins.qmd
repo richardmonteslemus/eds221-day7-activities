@@ -1,0 +1,58 @@
+---
+title: "Joining and Str Practice"
+format: html
+---
+```{r}
+library(tidyverse)
+library(lubridate)
+library(stringr)
+library(here)
+```
+
+```{r}
+bird_observations <- read_csv(here("data", "52_pp52_birds_1.csv"))
+
+sites <- read_csv(here("data", "52_pp52_sites_1.csv"))
+
+surveys <- read_csv(here("data", "52_pp52_surveys_1.csv"))
+
+taxalist <- read_csv(here("data", "52_pp52_taxalist_1.csv"))
+```
+
+```{r}
+# filter subset 
+bird_subset <- bird_observations %>% 
+   filter(species_id %in% c("BHCO", "RWBL"), site_id %in% c("LI-W", "NU-C")) 
+```
+
+```{r}
+# left join practice
+birds_left <- bird_subset %>% 
+  left_join(sites, by = "site_id" ) %>% 
+  left_join(taxalist, by = "species_id")
+  
+```
+
+```{r}
+# full join practice
+bird_full <- bird_subset %>% 
+  full_join(sites, by = "site_id")
+# join is what I expected, all rows for both tables have gotten included 
+
+```
+
+```{r}
+bird_renamed <- bird_observations %>% 
+  rename(bird_obs_notes = notes) %>% 
+  left_join(sites, by = "site_id" )  %>% 
+  left_join(taxalist, by = "species_id") %>% 
+  left_join(surveys, by = "survey_id" ) %>% 
+  select(c("survey_date", "common_name", "park_name", "bird_count")) %>% 
+  mutate(survey_month = lubridate::month(survey_date), 
+         survey_month = as.factor(survey_month)) %>% 
+  dplyr::relocate(survey_month, .after = survey_date) %>% 
+  group_by(park_name, survey_month) %>% 
+  summarize(count = n()) %>% 
+  filter(park_name %in% c("Lindo", "Orme", "Palomino", "Sonrisa"))
+```
+
